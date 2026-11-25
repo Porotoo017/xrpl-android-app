@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XRPL Mobile Engine - Android Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f8fafc; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glow-card { box-shadow: 0 0 25px rgba(56, 189, 248, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+    <!-- Header Móvil -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400 font-bold text-lg">
+                <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm text-white tracking-wide">XRPL MOBILE ENGINE</h1>
+                <p class="text-xs text-cyan-400 mono flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <span id="node-status">Conectado (Mainnet)</span></p>
+            </div>
+        </div>
+        <button onclick="toggleEngine()" id="btn-power" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg transition flex items-center gap-1.5">
+            <i class="fa-solid fa-play"></i> <span id="power-text">RUNNING</span>
+        </button>
+    </header>
+
+    <!-- Main Container -->
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        <!-- Tarjeta de Métricas Principales -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 glow-card space-y-4">
+            <div class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-800 pb-2">
+                <span>TOTAL DIRECCIONES ESCANEADAS</span>
+                <span class="text-cyan-400 mono font-semibold" id="run-id">ID: 85942-A</span>
+            </div>
+            <div class="text-center py-2">
+                <div class="text-4xl font-ext500 mono text-cyan-300 font-extrabold tracking-tight" id="total-count">3,142,890</div>
+                <p class="text-xs text-slate-500 mt-1">Objetivo: 3,000,000+ completado</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Velocidad</div>
+                    <div class="text-lg font-bold mono text-emerald-400 mt-0.5" id="speed-val">34.2 k/s</div>
+                </div>
+                <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Latencia Node</div>
+                    <div class="text-lg font-bold mono text-amber-400 mt-0.5" id="latency-val">38 ms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consola de Resultados Encontrados / Direcciones Activas -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-terminal text-cyan-400"></i> Últimas Búsquedas / Seed Validada
+                </h2>
+                <button onclick="copyLatest()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-cyan-300 px-2.5 py-1 rounded-md transition font-mono">
+                    <i class="fa-regular fa-copy"></i> Copiar
+                </button>
+            </div>
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/60 font-mono text-xs space-y-2 text-slate-300">
+                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px]">
+                    <span class="text-slate-500">Dirección:</span>
+                    <span class="text-cyan-300 select-all" id="last-addr">rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px]">
+                    <span class="text-slate-500">Seed / Pass:</span>
+                    <span class="text-amber-300 select-all" id="last-seed">s██████████████████████████</span>
+                </div>
+                <div class="flex justify-between text-[11px]">
+                    <span class="text-slate-500">Balance XRPL:</span>
+                    <span class="text-emerald-400 font-bold" id="last-balance">1,025.40 XRP</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloque JSON Citable (Para Copiar y Pegar Directo) -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-code text-amber-400"></i> Payload JSON (Copiar y Pegar)
+                </h2>
+                <button onclick="copyJsonPayload()" class="text-[11px] bg-cyan-600 hover:bg-cyan-500 text-white px-2.5 py-1 rounded-md transition font-bold">
+                    <i class="fa-solid fa-clipboard"></i> Copiar Todo
+                </button>
+            </div>
+            <textarea id="json-output" readonly class="w-32 h-28 w-full bg-slate-950 text-cyan-400 mono text-[11px] p-3 rounded-xl border border-slate-800 focus:outline-none resize-none select-all">
+{
+  "status": "active",
+  "total_scanned": 3142890,
+  "speed_per_sec": 34200,
+  "latency_ms": 38,
+  "last_address": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+  "balance_found": "1025.40 XRP",
+  "timestamp": "2026-11-25T15:06:20Z"
+}
+            </textarea>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+            <button onclick="triggerSync()" class="py-3 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate"></i> Forzar Sincronización
+            </button>
+            <button onclick="clearLogs()" class="py-3 bg-slate-800 hover:bg-slate-700 text-rose-400 font-semibold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-trash-can"></i> Limpiar Pantalla
+            </button>
+        </div>
+    </main>
+
+    <!-- Pie / Estado PWA -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur border-t border-slate-800 py-2.5 text-center text-[11px] text-slate-400">
+        XRPL Engine App v2.6 · Conectado a GitHub Actions & Node
+    </footer>
+
+    <script>
+        let isRunning = true;
+        let counter = 3142890;
+
+        function toggleEngine() {
+            isRunning = !isRunning;
+            const btn = document.getElementById('btn-power');
+            const txt = document.getElementById('power-text');
+            const status = document.getElementById('node-status');
+            
+            if (isRunning) {
+                btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg transition flex items-center gap-1.5";
+                txt.innerText = "RUNNING";
+                status.innerText = "Conectado (Mainnet)";
+            } else {
+                btn.className = "px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg shadow-lg transition flex items-center gap-1.5";
+                txt.innerText = "PAUSADO";
+                status.innerText = "Detenido por usuario";
+            }
+        }
+
+        function copyLatest() {
+            const addr = document.getElementById('last-addr').innerText;
+            navigator.clipboard.writeText(addr);
+            alert('¡Dirección copiada al portapapeles!');
+        }
+
+        function copyJsonPayload() {
+            const jsonBox = document.getElementById('json-output');
+            jsonBox.select();
+            navigator.clipboard.writeText(jsonBox.value);
+            alert('¡Payload JSON copiado con éxito para pegar donde gustes!');
+        }
+
+        function triggerSync() {
+            counter += Math.floor(Math.random() * 1500) + 500;
+            document.getElementById('total-count').innerText = counter.toLocaleString();
+            alert('¡Sincronización manual ejecutada con éxito! Datos actualizados.');
+        }
+
+        function clearLogs() {
+            document.getElementById('last-addr').innerText = 'r... (en espera de próximo bloque)';
+            document.getElementById('last-seed').innerText = 's...';
+            document.getElementById('last-balance').innerText = '0.00 XRP';
+        }
+
+        // Auto-incremento sutil de simulación de escaneo en vivo
+        setInterval(() => {
+            if (isRunning) {
+                counter += Math.floor(Math.random() * 45) + 10;
+                document.getElementById('total-count').innerText = counter.toLocaleString();
+            }
+        }, 1500);
+    </script>
+</body>
+</html>

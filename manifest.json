@@ -1,0 +1,15 @@
+{
+  "name": "XRPL Mobile Engine",
+  "short_name": "XRPL App",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Porotoo017/xrpl-android-app/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
