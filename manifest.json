@@ -1,13 +1,13 @@
 {
-  "name": "XRPL Mobile Engine",
-  "short_name": "XRPL App",
-  "start_url": "index.html",
+  "name": "XRPL Scanner Pro",
+  "short_name": "XRPL Scanner",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#090d16",
-  "theme_color": "#0f172a",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/Porotoo017/xrpl-android-app/main/icon.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png"
     }
