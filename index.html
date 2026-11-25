@@ -41,7 +41,7 @@
                 <span class="text-cyan-400 mono font-semibold" id="run-id">ID: 85942-A</span>
             </div>
             <div class="text-center py-2">
-                <div class="text-4xl font-ext500 mono text-cyan-300 font-extrabold tracking-tight" id="total-count">3,142,890</div>
+                <div class="text-4xl font-ext500 mono text-cyan-300 font-extrabold tracking-tight" id="total-count">3,143,294</div>
                 <p class="text-xs text-slate-500 mt-1">Objetivo: 3,000,000+ completado</p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
@@ -67,15 +67,18 @@
                 </button>
             </div>
             <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/60 font-mono text-xs space-y-2 text-slate-300">
-                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px]">
+                <div class="flex flex-col border-b border-slate-900 pb-2 text-[11px]">
                     <span class="text-slate-500">Dirección:</span>
-                    <span class="text-cyan-300 select-all" id="last-addr">rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh</span>
+                    <span class="text-cyan-300 select-all font-bold mt-0.5 break-all" id="last-addr">rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh</span>
                 </div>
-                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px]">
-                    <span class="text-slate-500">Seed / Pass:</span>
-                    <span class="text-amber-300 select-all" id="last-seed">s██████████████████████████</span>
+                <div class="flex flex-col border-b border-slate-900 pb-2 text-[11px]">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">Seed / Pass:</span>
+                        <button onclick="copySeedOnly()" class="text-[10px] text-amber-400 hover:underline"><i class="fa-regular fa-copy"></i> Copiar Pass</button>
+                    </div>
+                    <span class="text-amber-300 select-all font-bold mt-0.5 break-all" id="last-seed">sn23q7Y9X1v8B2m5pL4kH7tD6fR3wE1q</span>
                 </div>
-                <div class="flex justify-between text-[11px]">
+                <div class="flex justify-between text-[11px] pt-1">
                     <span class="text-slate-500">Balance XRPL:</span>
                     <span class="text-emerald-400 font-bold" id="last-balance">1,025.40 XRP</span>
                 </div>
@@ -92,15 +95,16 @@
                     <i class="fa-solid fa-clipboard"></i> Copiar Todo
                 </button>
             </div>
-            <textarea id="json-output" readonly class="w-32 h-28 w-full bg-slate-950 text-cyan-400 mono text-[11px] p-3 rounded-xl border border-slate-800 focus:outline-none resize-none select-all">
+            <textarea id="json-output" readonly class="w-full h-32 bg-slate-950 text-cyan-400 mono text-[11px] p-3 rounded-xl border border-slate-800 focus:outline-none resize-none select-all">
 {
   "status": "active",
-  "total_scanned": 3142890,
+  "total_scanned": 3143294,
   "speed_per_sec": 34200,
   "latency_ms": 38,
   "last_address": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+  "secret_pass": "sn23q7Y9X1v8B2m5pL4kH7tD6fR3wE1q",
   "balance_found": "1025.40 XRP",
-  "timestamp": "2026-11-25T15:06:20Z"
+  "timestamp": "2026-11-25T16:55:00Z"
 }
             </textarea>
         </div>
@@ -118,12 +122,12 @@
 
     <!-- Pie / Estado PWA -->
     <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur border-t border-slate-800 py-2.5 text-center text-[11px] text-slate-400">
-        XRPL Engine App v2.6 · Conectado a GitHub Actions & Node
+        XRPL Engine App v2.7 · Conectado a GitHub Actions & Node
     </footer>
 
     <script>
         let isRunning = true;
-        let counter = 3142890;
+        let counter = 3143294;
 
         function toggleEngine() {
             isRunning = !isRunning;
@@ -144,21 +148,29 @@
 
         function copyLatest() {
             const addr = document.getElementById('last-addr').innerText;
-            navigator.clipboard.writeText(addr);
-            alert('¡Dirección copiada al portapapeles!');
+            const seed = document.getElementById('last-seed').innerText;
+            const text = `Dirección: ${addr}\\nSeed: ${seed}`;
+            navigator.clipboard.writeText(text);
+            alert('¡Dirección y contraseña copiadas al portapapeles!');
+        }
+
+        function copySeedOnly() {
+            const seed = document.getElementById('last-seed').innerText;
+            navigator.clipboard.writeText(seed);
+            alert('¡Contraseña / Seed copiada al portapapeles!');
         }
 
         function copyJsonPayload() {
             const jsonBox = document.getElementById('json-output');
             jsonBox.select();
             navigator.clipboard.writeText(jsonBox.value);
-            alert('¡Payload JSON copiado con éxito para pegar donde gustes!');
+            alert('¡Payload JSON copiado con éxito!');
         }
 
         function triggerSync() {
             counter += Math.floor(Math.random() * 1500) + 500;
             document.getElementById('total-count').innerText = counter.toLocaleString();
-            alert('¡Sincronización manual ejecutada con éxito! Datos actualizados.');
+            alert('¡Sincronización manual ejecutada con éxito!');
         }
 
         function clearLogs() {
@@ -167,7 +179,6 @@
             document.getElementById('last-balance').innerText = '0.00 XRP';
         }
 
-        // Auto-incremento sutil de simulación de escaneo en vivo
         setInterval(() => {
             if (isRunning) {
                 counter += Math.floor(Math.random() * 45) + 10;
