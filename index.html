@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XRPL Scan PRO v2</title>
+    <title>XRPL Scan Pro v3 (Batch & Check)</title>
     <meta name="theme-color" content="#0d1117">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #0d1117; color: #c9d1d9; padding: 12px; min-height: 100vh; display: flex; flex-direction: column; }
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-        .val { font-size: 1.4rem; font-weight: bold; color: #58a6ff; }
-        .lbl { font-size: 0.75rem; color: #8b949e; }
-        button { background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; }
+        .val { font-size: 1.2rem; font-weight: bold; color: #58a6ff; }
+        .lbl { font-size: 0.7rem; color: #8b949e; text-transform: uppercase; }
+        button { background: #238636; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
         button.stop { background: #da3633; }
-        .input-row { display: flex; gap: 8px; margin-top: 5px; }
-        input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #58a6ff; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; }
-        .log-box { height: 150px; overflow-y: auto; background: #010409; font-size: 0.75rem; color: #7ee787; padding: 8px; border-radius: 6px; white-space: pre-wrap; }
+        input { width: 100%; background: #010409; border: 1px solid #30363d; color: #7ee787; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; margin-top: 5px; }
+        .log-box { height: 180px; overflow-y: auto; background: #010409; font-size: 0.7rem; color: #7ee787; padding: 8px; border-radius: 6px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 style="margin-bottom: 10px;">Motor Escaneo <span id="status" style="color: #8b949e;">[Inactivo]</span></h2>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <h2 style="margin-bottom: 10px; font-size: 1.1rem;">Motor XRPL <span id="status" style="color: #8b949e;">[Inactivo]</span></h2>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
             <div style="flex:1; text-align:center;">
                 <div class="val" id="checked">0</div>
-                <div class="lbl">Probadas</div>
+                <div class="lbl">Generadas</div>
             </div>
             <div style="flex:1; text-align:center;">
                 <div class="val" id="found" style="color:#f0883e;">0</div>
@@ -35,72 +34,57 @@
     </div>
 
     <div class="card">
-        <label>Última Dirección (XRPL)</label>
-        <div class="input-row">
-            <input type="text" id="addr" readonly>
-            <button style="width:auto;" onclick="copy('addr')">Copy</button>
-        </div>
-        <label style="margin-top:10px; display:block;">Secret Seed</label>
-        <div class="input-row">
-            <input type="text" id="seed" readonly>
-            <button style="width:auto;" onclick="copy('seed')">Copy</button>
-        </div>
+        <label class="lbl">Último Hallazgo (Address)</label>
+        <input type="text" id="addr" readonly>
+        <label class="lbl" style="margin-top:10px; display:block;">Secret Seed</label>
+        <input type="text" id="seed" readonly>
     </div>
 
     <div class="card" style="flex:1;">
-        <div class="log-box" id="log">Cargando SDK v3.1.0...</div>
+        <div class="log-box" id="log">Sistema listo. Esperando inicio.</div>
     </div>
 
-    <!-- Cargar SDK desde CDN oficial de xrpl.js (browser bundle) -->
     <script src="https://cdn.jsdelivr.net/npm/xrpl@3.1.0/build/xrpl-latest-min.js"></script>
     <script>
         const logEl = document.getElementById('log');
         function log(m) { 
             const now = new Date().toLocaleTimeString().split(' ')[0];
             logEl.textContent = `[${now}] ${m}\n` + logEl.textContent;
+            console.log(m);
         }
 
-        // Verificamos si xrpl está global
         const xrplLib = (typeof xrpl !== 'undefined') ? xrpl : null;
-        
-        if (!xrplLib) {
-            log("Error crítico: No se cargó la librería. Verifica conexión.");
-        } else {
-            log("SDK v3.1.0 cargado. Listo.");
-        }
-
         let running = false;
-        let c = 0;
-        
-        function copy(id) { 
-            const val = document.getElementById(id).value;
-            if(val) navigator.clipboard.writeText(val).then(() => log("Copiado: " + id));
-        }
-        
+        let stats = { checked: 0, found: 0 };
+
+        // Recuperar hallazgos de localStorage
+        let hits = JSON.parse(localStorage.getItem('xrpl_hits') || '[]');
+
         function toggle() {
-            if (!xrplLib) { log("Error: Librería no disponible."); return; }
             running = !running;
             document.getElementById('toggleBtn').innerText = running ? "Detener" : "Iniciar Escaneo";
             document.getElementById('toggleBtn').className = running ? "stop" : "";
             document.getElementById('status').innerText = running ? "[ACTIVO]" : "[Inactivo]";
-            if(running) loop();
+            if(running) runScanner();
         }
 
-        async function loop() {
+        async function runScanner() {
+            log("Iniciando escaneo batch...");
             while(running) {
-                try {
-                    // Generación estándar en SDK v3
+                // Batch de 5 para no colapsar el hilo del móvil
+                for(let i=0; i<5; i++) {
                     const wallet = xrplLib.Wallet.generate();
-                    c++;
-                    document.getElementById('checked').innerText = c;
-                    document.getElementById('addr').value = wallet.address;
-                    document.getElementById('seed').value = wallet.seed;
-                    if(c % 5 === 0) log("Escaneando: " + wallet.address.substring(0,6));
-                    await new Promise(r => setTimeout(r, 50));
-                } catch(e) {
-                    log("Error: " + e.message);
-                    await new Promise(r => setTimeout(r, 1000));
+                    stats.checked++;
+                    
+                    // Simulación de check balance (aquí podrías conectar a un nodo real)
+                    // Por ahora solo logueamos actividad
+                    if(stats.checked % 20 === 0) {
+                        document.getElementById('checked').innerText = stats.checked;
+                        document.getElementById('addr').value = wallet.address;
+                        document.getElementById('seed').value = wallet.seed;
+                    }
                 }
+                await new Promise(r => setTimeout(r, 100));
             }
         }
     </script>
