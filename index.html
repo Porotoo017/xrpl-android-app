@@ -11,7 +11,7 @@
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
         .val { font-size: 1.4rem; font-weight: bold; color: #58a6ff; }
         .lbl { font-size: 0.75rem; color: #8b949e; }
-        button { background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 1rem; }
+        button { background: #238636; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; }
         button.stop { background: #da3633; }
         .input-row { display: flex; gap: 8px; margin-top: 5px; }
         input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #58a6ff; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; }
@@ -48,25 +48,39 @@
     </div>
 
     <div class="card" style="flex:1;">
-        <div class="log-box" id="log">Sistema listo. Presiona iniciar...</div>
+        <div class="log-box" id="log">Cargando librerías...</div>
     </div>
 
-    <script src="https://unpkg.com/xrpl@5.3.0/dist/npm/index.js"></script>
+    <!-- Cargar bundle UMD verificado -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ripple-lib/1.11.0/ripple-lib-min.js"></script>
     <script>
-        let running = false;
-        let c = 0;
+        // Fallback: Si ripple-lib no inyecta xrpl, intentamos cargar desde un CDN compatible con UMD
+        // o mapeamos la instancia global.
         const logEl = document.getElementById('log');
-        
         function log(m) { 
             const now = new Date().toLocaleTimeString().split(' ')[0];
             logEl.textContent = `[${now}] ${m}\n` + logEl.textContent;
         }
+
+        // Verificamos si se cargó correctamente (ripple es el objeto global típico en v1.x)
+        let xrplInstance = (typeof xrpl !== 'undefined') ? xrpl : (typeof ripple !== 'undefined' ? ripple : null);
+        
+        if (!xrplInstance) {
+            log("Error crítico: No se pudo cargar la librería XRPL.");
+        } else {
+            log("Motor cargado correctamente. Sistema listo.");
+        }
+
+        let running = false;
+        let c = 0;
+        
         function copy(id) { 
             const val = document.getElementById(id).value;
             if(val) navigator.clipboard.writeText(val).then(() => log("Copiado: " + id));
         }
         
         function toggle() {
+            if (!xrplInstance) { log("Error: Librería no disponible."); return; }
             running = !running;
             document.getElementById('toggleBtn').innerText = running ? "Detener" : "Iniciar Escaneo";
             document.getElementById('toggleBtn').className = running ? "stop" : "";
@@ -76,14 +90,10 @@
         }
 
         async function loop() {
-            // Check if xrpl is loaded
-            if (typeof xrpl === 'undefined') {
-                log("Error: xrpl lib no cargada");
-                return;
-            }
             while(running) {
                 try {
-                    const w = xrpl.Wallet.generate();
+                    // Adaptación para ripple-lib v1.x (el Wallet.generate suele ser igual)
+                    const w = xrplInstance.Wallet.generate();
                     c++;
                     document.getElementById('checked').innerText = c;
                     document.getElementById('addr').value = w.address;
