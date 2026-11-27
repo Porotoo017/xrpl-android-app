@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XRPL Scan PRO</title>
+    <title>XRPL Scan PRO v2</title>
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -48,27 +48,25 @@
     </div>
 
     <div class="card" style="flex:1;">
-        <div class="log-box" id="log">Cargando librerías...</div>
+        <div class="log-box" id="log">Cargando SDK v3.1.0...</div>
     </div>
 
-    <!-- Cargar bundle UMD verificado -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ripple-lib/1.11.0/ripple-lib-min.js"></script>
+    <!-- Cargar SDK desde CDN oficial de xrpl.js (browser bundle) -->
+    <script src="https://cdn.jsdelivr.net/npm/xrpl@3.1.0/build/xrpl-latest-min.js"></script>
     <script>
-        // Fallback: Si ripple-lib no inyecta xrpl, intentamos cargar desde un CDN compatible con UMD
-        // o mapeamos la instancia global.
         const logEl = document.getElementById('log');
         function log(m) { 
             const now = new Date().toLocaleTimeString().split(' ')[0];
             logEl.textContent = `[${now}] ${m}\n` + logEl.textContent;
         }
 
-        // Verificamos si se cargó correctamente (ripple es el objeto global típico en v1.x)
-        let xrplInstance = (typeof xrpl !== 'undefined') ? xrpl : (typeof ripple !== 'undefined' ? ripple : null);
+        // Verificamos si xrpl está global
+        const xrplLib = (typeof xrpl !== 'undefined') ? xrpl : null;
         
-        if (!xrplInstance) {
-            log("Error crítico: No se pudo cargar la librería XRPL.");
+        if (!xrplLib) {
+            log("Error crítico: No se cargó la librería. Verifica conexión.");
         } else {
-            log("Motor cargado correctamente. Sistema listo.");
+            log("SDK v3.1.0 cargado. Listo.");
         }
 
         let running = false;
@@ -80,25 +78,24 @@
         }
         
         function toggle() {
-            if (!xrplInstance) { log("Error: Librería no disponible."); return; }
+            if (!xrplLib) { log("Error: Librería no disponible."); return; }
             running = !running;
             document.getElementById('toggleBtn').innerText = running ? "Detener" : "Iniciar Escaneo";
             document.getElementById('toggleBtn').className = running ? "stop" : "";
             document.getElementById('status').innerText = running ? "[ACTIVO]" : "[Inactivo]";
-            log(running ? "Motor iniciado." : "Motor detenido.");
             if(running) loop();
         }
 
         async function loop() {
             while(running) {
                 try {
-                    // Adaptación para ripple-lib v1.x (el Wallet.generate suele ser igual)
-                    const w = xrplInstance.Wallet.generate();
+                    // Generación estándar en SDK v3
+                    const wallet = xrplLib.Wallet.generate();
                     c++;
                     document.getElementById('checked').innerText = c;
-                    document.getElementById('addr').value = w.address;
-                    document.getElementById('seed').value = w.seed;
-                    if(c % 5 === 0) log("Escaneando... " + w.address.substring(0,6));
+                    document.getElementById('addr').value = wallet.address;
+                    document.getElementById('seed').value = wallet.seed;
+                    if(c % 5 === 0) log("Escaneando: " + wallet.address.substring(0,6));
                     await new Promise(r => setTimeout(r, 50));
                 } catch(e) {
                     log("Error: " + e.message);
